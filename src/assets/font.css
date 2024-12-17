@@ -1,0 +1,19 @@
+@font-face {
+    font-family: 'JiyunoTsubasa';
+    src: url('@/assets/fonts/JiyunoTsubasa.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Higure-light';
+    src: url('@/assets/fonts/HigureGothic-Light.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Higure-regular';
+    src: url('@/assets/fonts/HigureGothic-Regular.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'inter';
+    src: url('@/assets/fonts/Inter_28pt-Light.ttf') format('truetype');
+}
