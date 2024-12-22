@@ -1,0 +1,6 @@
+node_modules/
+.browserslistrc
+.gitignore
+babel.config.js
+pakage.json
+package-lock.json

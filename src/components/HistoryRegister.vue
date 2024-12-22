@@ -1,10 +1,10 @@
 <script setup lang="ts">
-  import { onMounted, ref, watch } from "vue";
+  import { onMounted, ref } from "vue";
   import dayjs from "dayjs";
   dayjs.locale('ja');
   import z from "zod"
   import { useQuasar } from "quasar";
-  import { getApps, createHistory, checkDuplicateApp, createApp, updateApp } from "@/services/app"
+  import { getApps, createHistory } from "@/services/app"
   import { appObject, historyObject, optionObject } from "@/services/zodobject";
 
   const $q = useQuasar()
@@ -12,22 +12,18 @@
   // 初期値
   const date = ref(dayjs().format('YYYY / MM / DD'))
   const model = ref(null)
-  const newApps = ref()
-  const oldApps = ref()
+  const newApps = ref(new Array)
+  const oldApps = ref(new Array)
   const newOptions = ref(new Array)
   const oldOptions = ref(new Array)
   const appExpanded = ref(false)
   const billingAmount = ref(null)
-  const isEditing = ref(false)
   const noAppSelected = ref(false)
   const noAmount = ref(false)
-  const isDuplicateApp = ref(false)
+  const isHovered = ref(false)
 
-  const updateAppMap = ref(new Map<number, string>())
-  const createdAppArray = ref(new Array)
-  const createAppName = ref("")
-  const nowOptions = ref()
-
+  const isLoading = ref(true); // ローディング状態を管理
+  
   // 画面関数
   async function submitForm() {
     // バリデーション
@@ -64,67 +60,6 @@
   function changeAmount() {
     noAmount.value = Number(billingAmount.value) < 1 || Number(billingAmount.value) > 100000
   }
-  function changeAppName(id: number, name: string) {
-    updateAppMap.value.set(id, name)
-  }
-  async function updateAppName() {
-
-    const argArray = new Array<object>()
-
-    updateAppMap.value.forEach((v, k) =>{
-      argArray.push({
-        id: k,
-        name: v,
-      })
-      
-      newOptions.value.map((opt) => {
-        if (opt.value === k) {
-          opt.label = v
-        }
-      })
-      
-      oldOptions.value.map((opt) => {
-        if (opt.value === k) {
-          opt.label = v
-        }
-      })
-    })
-
-    await updateApp(argArray);
-
-    isEditing.value = false
-
-    // 通知
-    $q.notify({
-      type: 'positive',
-      position: 'top',
-      message: '更新しました',
-    })
-  }
-  async function addCreateAppName(name: string) {
-    if (name === "") {
-      return
-    };
-    const check = await checkDuplicateApp(name);
-    if (check.is_duplicate) {
-      isDuplicateApp.value = true
-      return
-    };
-
-    // 登録
-    const cApp = await createApp(name);
-
-    createdAppArray.value.push(appObject.parse(cApp));
-
-    nowOptions.value = createdAppArray.value.map(app =>{
-      const a = { "value": app.id, "label" : app.name }
-      return optionObject.parse(a)
-    });
-
-    createAppName.value = "";
-    isDuplicateApp.value = false;
-    isEditing.value = false;
-  }
 
   // バリデーション
   const errAmount = (() => {
@@ -142,35 +77,35 @@
 
   // マウントされた時
   onMounted(async () => {
-    const pd = await getApps();
-
-    const apps = z.array(
-      appObject
-    ).parse(pd);
-
-    const newA = apps.filter(function(_, index) {
-        return index < 5
-    });
-    newApps.value = newA;
-    newOptions.value = newA.map(app =>{
-      const a = { "value": app.id, "label" : app.name }
-      return optionObject.parse(a)
-    });
-
-    const oldA = apps.filter(function(_, index) {
-        return index >= 5
-    });
-    oldApps.value = oldA;
-    oldOptions.value = oldA.map(app =>{
-      const a = { "value": app.id, "label" : app.name }
-      return optionObject.parse(a)
-    })
-  });
-
-  watch(createAppName, () => {
-    if (createAppName.value === "") {
-      isDuplicateApp.value = false;
-    };
+    try {
+      const pd = await getApps();
+      const apps = z.array(
+        appObject
+      ).parse(pd);
+  
+      const newA = apps.filter(function(_, index) {
+          return index < 5
+      });
+      newApps.value = newA;
+      newOptions.value = newA.map(app =>{
+        const a = { "value": app.id, "label" : app.name }
+        return optionObject.parse(a)
+      });
+  
+      const oldA = apps.filter(function(_, index) {
+          return index >= 5
+      });
+      oldApps.value = oldA;
+      oldOptions.value = oldA.map(app =>{
+        const a = { "value": app.id, "label" : app.name }
+        return optionObject.parse(a)
+      })
+      
+    } catch (error) {
+      console.error(error);
+    } finally {
+      isLoading.value = false; // ローディング完了
+    }
   });
 
 </script>
@@ -188,81 +123,23 @@
         </div>
         <hr color="#D6C494" size="0" style="margin: 0%;">
 
-        <div class="input-field input-bg-color" v-if="isEditing">
-            <input 
-              class="app-input"
-              v-model="createAppName"
-            >
-            <button class="higure-regular reg-button in-button" @click="addCreateAppName(createAppName)" >
-              登録
-            </button>
-        </div>
-        <p v-if="isDuplicateApp && isEditing" class="error input-field text-right">既に登録されている課金対象です</p>
-
+        <div v-if="isLoading">ロード中。。。</div>
         <q-option-group
+          v-if="!isLoading && newOptions"
           :options="newOptions"
           keep-color
           color="positive"
           type="radio"
           v-model="model"
           size="xs"
-          v-if="!isEditing"
           class="input-field input-bg-color"
           v-on:update:model-value="changeApps()"
         />
-
-        <div class="input-field input-bg-color" v-if="isEditing">
-          <button class="higure-regular reg-button in-button" @click="updateAppName()" >
-            更新
-          </button>
-          <div 
-            v-for="app in newApps"
-            :key="app.id"
-          >
-            <input 
-              class="app-input"
-              v-model="app.name" 
-              v-on:update:model-value="changeAppName(app.id, app.name)"
-            >
-          </div>
-        </div>
-
-        <q-option-group
-          :options="nowOptions"
-          keep-color
-          color="positive"
-          type="radio"
-          v-model="model"
-          size="xs"
-          v-if="!isEditing"
-          class="input-field input-bg-color"
-          v-on:update:model-value="changeApps()"
-        />
-
-        <div class="input-field input-bg-color" v-if="isEditing">
-          <div 
-            v-for="app in createdAppArray"
-            :key="app.id"
-          >
-            <input 
-              class="app-input"
-              v-model="app.name"
-              v-on:update:model-value="changeAppName(app.id, app.name)"
-            >
-          </div>
-        </div>
 
         <div class="toggle row justify-end q-gutter-x-md">
           <div style="text-align: center;">その他を表示</div>
           <label class="switch">
             <input type="checkbox" v-model="appExpanded">
-            <span class="slider round"></span>
-          </label>
-        </div>
-        <div class="toggle row justify-end q-gutter-x-md">
-          <div style="text-align: center;">編集</div>
-          <label class="switch">
-            <input type="checkbox" v-model="isEditing">
             <span class="slider round"></span>
           </label>
         </div>
@@ -272,7 +149,6 @@
           :options="oldOptions"
           :class="{ 'none-vision': !appExpanded }"
           type="radio"
-          v-if="!isEditing"
           v-model="model"
           color="positive"
           keep-color
@@ -282,19 +158,6 @@
           v-on:update:model-value="changeApps()"
           />
         </div>
-        <div class="input-field input-bg-color" v-if="isEditing" :class="{ 'none-vision': !appExpanded }">
-          <div 
-            v-for="app in oldApps"
-            :key="app.id"
-          >
-            <input 
-              class="app-input"
-              v-model="app.name" 
-              v-on:update:model-value="changeAppName(app.id, app.name)"
-            >
-          </div>
-        </div>
-
 
         <p v-if="noAppSelected" class="error input-field text-right">課金対象を選択してください</p>
 
@@ -319,6 +182,7 @@
           class="inter input-field"
           input-class="text-right input-bg-color number-input"
           input-style="padding: 5%;"
+          placeholder="0"
           v-on:update:model-value="changeAmount()"
         >
           <template v-slot:prepend>
@@ -350,20 +214,28 @@
           readonly
         >
           <template v-slot:prepend>
-            <q-icon name="img:/src/assets/img/calendar.png" class="cursor-pointer icon">
+            <q-icon name="img:/src/assets/calendar.png" class="cursor-pointer icon">
             </q-icon>
           </template>
           <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-            <q-date v-model="date" color="positive" mask="YYYY / MM / DD">
+            <q-date v-model="date" color="positive" mask="YYYY / MM / DD" >
               <div class="row items-center justify-end">
-                <q-btn v-close-popup label="Close" color="positive" flat />
+                <q-btn v-close-popup label="Close" outline class="higure-regular reg-button" />
               </div>
             </q-date>
           </q-popup-proxy>
         </q-input>
 
         <div class="row justify-end">
-          <q-btn class="higure-regular reg-button" outline label="登録" @click="submitForm()" />
+          <button 
+            :class="{ 'hover-state': isHovered }"
+            @mouseover="isHovered = true"
+            @mouseleave="isHovered = false" 
+            class="higure-regular reg-button out-button" 
+            @click="submitForm()" 
+          >
+            登録
+          </button>
         </div>
       </div>
     </div>
@@ -428,6 +300,11 @@
     color: #D6C494;
   }
 
+  .reg-button.hover-state {
+    background-color: #D6C494 !important;
+    color: white !important;
+  }
+
   .icon {
     padding: 35%;
   }
@@ -460,6 +337,18 @@
     margin: 0.23rem;
     vertical-align: middle;
   }
+
+  .out-button {
+    border: 0.1rem solid #D6C494;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 0.1rem 1rem;
+    vertical-align: middle;
+  }
+
+  /* .calendar {
+    color: ;
+  } */
 
 
   /* トグル */

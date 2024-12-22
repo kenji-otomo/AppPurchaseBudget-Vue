@@ -37,3 +37,7 @@ npm run build
 ```sh
 npm run lint
 ```
+
+### Deploy command
+
+./deploy.sh

@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import Register from "../components/Register.vue";
-import Info from "@/components/Info.vue";
+import HistoryRegister from "../components/HistoryRegister.vue";
+import TitleInfo from "@/components/TitleInfo.vue";
 </script>
 
 <template>
   <main class="row justify-center">
     <div class="col-12" style="width: 25rem;">
-      <Info />
-      <Register />
+      <TitleInfo />
+      <HistoryRegister />
     </div>
   </main>
 </template>
