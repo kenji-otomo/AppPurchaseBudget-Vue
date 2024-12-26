@@ -75,3 +75,13 @@ export const fetchBudgetByType = async (t: number) => {
         throw error;
     }
 };
+
+export const fetchHistory = async () => {
+    try {
+        const response = await apiClient.get("history")
+        return response.data
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+};

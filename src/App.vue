@@ -9,21 +9,28 @@ import { RouterView } from 'vue-router'
 
       <q-header >
         <q-toolbar style="background-color: #D5C6A7;">
-          <q-toolbar-title class="text-center jiyu tool-bar-title" style="color: #FDFDFD; z-index: 0;" >課金簿</q-toolbar-title>
+          <q-toolbar-title class="text-center jiyu" style="color: #FDFDFD; z-index: 0;" >
+            <a class="tool-bar-title" href="/">課金簿</a>
+          </q-toolbar-title>
           <q-btn
             flat
             no-wrap
             dense
             round
             aria-label="Menu"
-            icon="menu"
             color="FDFDFD"
             style="z-index: 1;"
           >
+            <q-avatar>
+              <img src="/src/assets/img/humbargar.png">
+            </q-avatar>
             <q-menu auto-close>
               <q-list dense>
                 <q-item clickable class="GL__menu-link" to="/">
                   <q-item-section>ホーム</q-item-section>
+                </q-item>
+                <q-item clickable class="GL__menu-link" to="/history">
+                  <q-item-section>課金履歴</q-item-section>
                 </q-item>
                 <q-item clickable class="GL__menu-link" to="/about">
                   <q-item-section>課金状況</q-item-section>
@@ -52,7 +59,7 @@ import { RouterView } from 'vue-router'
 }
 
 div {
-  font-family: 'Higure-light';
+  font-family: 'NotoSansJP-ExtraLight';
 }
 
 .jiyu {
@@ -64,4 +71,9 @@ div {
 .higure-regular {
   font-family: 'Higure-regular';
 }
+
+a {
+  text-decoration: none;
+}
+
 </style>

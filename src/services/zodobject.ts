@@ -12,6 +12,14 @@ export const historyObject = z.object({
   PurchaseDate: z.date(),
 });
 
+export const purchaseHistoryObject = z.object({
+  id: z.number(),
+  app_id: z.number(),
+  amount: z.number(),
+  purchase_date: z.string(),
+  name: z.string(),
+})
+
 export const optionObject = z.object({
     value: z.number(),
     label: z.string(),

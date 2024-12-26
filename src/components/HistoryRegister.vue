@@ -19,8 +19,9 @@
   const appExpanded = ref(false)
   const billingAmount = ref(null)
   const noAppSelected = ref(false)
-  const noAmount = ref(false)
+  const isAmountValid = ref(false)
   const isHovered = ref(false)
+  const noAmount = ref(true)
 
   const isLoading = ref(true); // ローディング状態を管理
   
@@ -58,13 +59,24 @@
     noAppSelected.value = false
   }
   function changeAmount() {
-    noAmount.value = Number(billingAmount.value) < 1 || Number(billingAmount.value) > 100000
+    isAmountValid.value = Number(billingAmount.value) < 1 || Number(billingAmount.value) > 100000
+
+    if (billingAmount.value === null || billingAmount.value === "") {
+      noAmount.value = true;
+    } else {
+      noAmount.value = false;
+    }
+
+    console.log(billingAmount);
+    console.log(noAmount);
+    
+    
   }
 
   // バリデーション
   const errAmount = (() => {
     if (Number(billingAmount.value) < 1) {
-      noAmount.value = true
+      isAmountValid.value = true
       return true
     }
   })
@@ -123,7 +135,8 @@
         </div>
         <hr color="#D6C494" size="0" style="margin: 0%;">
 
-        <div v-if="isLoading">ロード中。。。</div>
+        <div v-if="isLoading" class="input-field input-bg-color"></div>
+        <div class="input-field sub-title smart-ui">▶︎課金額 TOP5 (過去2ヶ月以内)</div>
         <q-option-group
           v-if="!isLoading && newOptions"
           :options="newOptions"
@@ -133,6 +146,7 @@
           v-model="model"
           size="xs"
           class="input-field input-bg-color"
+          style="margin-top: 0%;"
           v-on:update:model-value="changeApps()"
         />
 
@@ -179,9 +193,9 @@
           reverse-fill-mask
           unmasked-value
           dense
-          class="inter input-field"
-          input-class="text-right input-bg-color number-input"
-          input-style="padding: 5%;"
+          class="roboto-mono input-field"
+          :input-class="{ 'number-input': noAmount, 'text-right': true, 'input-bg-color': true }"
+          :input-style="{ padding : '5%', color: noAmount ? '#D6C494' : '#67625C' }"
           placeholder="0"
           v-on:update:model-value="changeAmount()"
         >
@@ -191,7 +205,7 @@
             </q-icon>
           </template>
         </q-input>
-        <p v-if="noAmount" class="error input-field text-right">1円以上の金額を入力してください</p>
+        <p v-if="isAmountValid" class="error input-field text-right">1円以上の金額を入力してください</p>
 
         <div class="title">
           <div>
@@ -208,19 +222,27 @@
           color="positive"
           bg-color="warning"
           mask="#### / ## / ##"
-          class="inter input-field" 
+          class="roboto-mono input-field" 
           input-class="text-right input-bg-color"
           input-style="padding: 5%;"
           readonly
         >
           <template v-slot:prepend>
-            <q-icon name="img:/src/assets/calendar.png" class="cursor-pointer icon">
+            <q-icon name="img:/src/assets/img/calendar.png" class="cursor-pointer icon">
             </q-icon>
           </template>
           <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-            <q-date v-model="date" color="positive" mask="YYYY / MM / DD" >
+            <q-date v-model="date" color="secondary" mask="YYYY / MM / DD" >
               <div class="row items-center justify-end">
-                <q-btn v-close-popup label="Close" outline class="higure-regular reg-button" />
+                <q-btn 
+                  v-close-popup 
+                  label="閉じる" 
+                  outline 
+                  class="higure-regular reg-button" 
+                  :class="{ 'hover-state': isHovered }"
+                  @mouseover="isHovered = true"
+                  @mouseleave="isHovered = false"
+                />
               </div>
             </q-date>
           </q-popup-proxy>
@@ -263,6 +285,16 @@
   .inter {
     font-family: 'inter';
   }
+  .smart-ui {
+    font-family: 'smart-ui';
+  }
+  .roboto-mono {
+    font-family: 'RobotoMono';
+  }
+
+  .noto {
+    font-family: 'NotoSansJP-ExtraLight';
+  }
 
   .title {
     margin-left: 10%;
@@ -284,12 +316,20 @@
     letter-spacing: 0.2rem;
   }
 
+  .sub-title {
+    color: #D6C494;
+  }
+
   .input-field {
     margin-left: 20%;
   }
 
   .input-bg-color {
     background-color: #FAF7F1;
+  }
+
+  .number-input {
+    color: #D6C494 !important;
   }
 
   .none-vision {
@@ -342,14 +382,10 @@
     border: 0.1rem solid #D6C494;
     border-radius: 5px;
     cursor: pointer;
-    padding: 0.1rem 1rem;
+    padding: 0.1rem 1.5rem;
     vertical-align: middle;
+    font-size: large;
   }
-
-  /* .calendar {
-    color: ;
-  } */
-
 
   /* トグル */
   .switch {
